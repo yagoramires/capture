@@ -62,11 +62,26 @@ enum Screencapture {
 
     private static let domain = "com.apple.screencapture" as CFString
 
-    /// A pasta do "Salvar em" do ⇧⌘5. Trocar aqui troca lá também.
-    static var folder: URL { savedFolder(keys: ["location", "location-screenshot"]) }
+    /// Prints e gravações podem ir pra pastas diferentes, como no "Salvar em" do ⇧⌘5.
+    enum Kind {
+        case prints, recordings
 
-    /// O macOS recente pode guardar uma pasta só pras gravações; sem ela, vale a dos prints.
-    static var recordingFolder: URL { savedFolder(keys: ["location-screenrecording", "location", "location-screenshot"]) }
+        /// O macOS recente guarda uma pasta pra cada; o "location" antigo vale pros prints.
+        var keys: [String] {
+            switch self {
+            case .prints: ["location", "location-screenshot"]
+            case .recordings: ["location-screenrecording"]
+            }
+        }
+    }
+
+    /// A pasta dos prints. Trocar aqui troca no ⇧⌘5 também.
+    static var folder: URL { savedFolder(keys: Kind.prints.keys) }
+
+    /// Sem uma pasta própria, as gravações vão pra mesma dos prints.
+    static var recordingFolder: URL { savedFolder(keys: Kind.recordings.keys + Kind.prints.keys) }
+
+    static func folder(for kind: Kind) -> URL { kind == .prints ? folder : recordingFolder }
 
     private static func savedFolder(keys: [String]) -> URL {
         for key in keys {
@@ -81,14 +96,19 @@ enum Screencapture {
         return FileManager.default.urls(for: .desktopDirectory, in: .userDomainMask)[0]
     }
 
-    static func setFolder(_ url: URL) {
-        let path = (url.path as NSString).abbreviatingWithTildeInPath
-        // O macOS recente guarda uma pasta pra prints e outra pra gravações; o painel muda as duas.
-        for key in ["location", "location-screenshot", "location-screenrecording"] {
-            CFPreferencesSetAppValue(key as CFString, path as CFString, domain)
+    static func setFolder(_ url: URL, for kind: Kind) {
+        // Fixa a pasta atual das gravações antes, pra elas não seguirem os prints sem querer.
+        if kind == .prints, CFPreferencesCopyAppValue("location-screenrecording" as CFString, domain) == nil {
+            write(recordingFolder, keys: Kind.recordings.keys)
         }
+        write(url, keys: kind.keys)
+        debugLog("pasta \(kind == .prints ? "dos prints" : "das gravações"): \(url.path)")
+    }
+
+    private static func write(_ url: URL, keys: [String]) {
+        let path = (url.path as NSString).abbreviatingWithTildeInPath
+        for key in keys { CFPreferencesSetAppValue(key as CFString, path as CFString, domain) }
         CFPreferencesAppSynchronize(domain)
-        debugLog("pasta das capturas: \(path)")
     }
 
     // MARK: Utilitários

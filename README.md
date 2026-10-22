@@ -62,8 +62,8 @@ o atalho nativo. Quando termina, o vídeo aparece no Finder.
 | Item | O que faz |
 | --- | --- |
 | Painel de captura do macOS (`⇧⌘5`) | Abre o painel nativo, igual ao atalho. |
-| Abrir pasta das capturas | Abre a pasta onde os prints e vídeos são salvos. |
-| Opções ▸ | As mesmas do `⇧⌘5` → Opções: **Salvar em** (muda a pasta do sistema também), **Timer** (nenhum, 5 ou 10 s, vale pra prints e gravações), mostrar o ponteiro do mouse, mostrar cliques, gravar o microfone e abrir depois de capturar. |
+| Prints / Gravações | Abre no Finder a pasta onde cada um é salvo. Se for a mesma pasta, vira um item só: **Capturas**. |
+| Opções ▸ | As mesmas do `⇧⌘5` → Opções: **Salvar prints em** e **Salvar gravações em** (cada um com sua pasta; muda a do sistema também), **Timer** (nenhum, 5 ou 10 s, vale pra prints e gravações), mostrar o ponteiro do mouse, mostrar cliques, gravar o microfone e abrir depois de capturar. |
 | Atualizar para a versão X… | Aparece quando tem versão nova. |
 | Abrir ao iniciar sessão | Liga o Capture junto com o Mac. |
 | Ajuda ▸ | Mostra a versão, busca atualizações, abre o log de depuração e reporta problemas. |

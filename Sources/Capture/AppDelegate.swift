@@ -99,13 +99,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         afterMenuCloses { Screencapture.openToolbar() }
     }
 
-    @objc private func openFolder() {
-        NSWorkspace.shared.open(Screencapture.folder)
+    @objc private func openFolder(_ sender: NSMenuItem) {
+        NSWorkspace.shared.open(sender.representedObject as? URL ?? Screencapture.folder)
     }
 
+    /// `tag` diz qual pasta: 0 prints, 1 gravações.
     @objc private func chooseFolder(_ sender: NSMenuItem) {
+        let kind: Screencapture.Kind = sender.tag == 1 ? .recordings : .prints
         if let url = sender.representedObject as? URL {
-            Screencapture.setFolder(url)
+            Screencapture.setFolder(url, for: kind)
             return
         }
         NSApp.activate(ignoringOtherApps: true)
@@ -113,9 +115,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         panel.canChooseFiles = false
         panel.canChooseDirectories = true
         panel.canCreateDirectories = true
-        panel.directoryURL = Screencapture.folder
+        panel.directoryURL = Screencapture.folder(for: kind)
+        panel.message = kind == .prints ? "Onde salvar os prints" : "Onde salvar as gravações"
         panel.prompt = "Escolher"
-        if panel.runModal() == .OK, let url = panel.url { Screencapture.setFolder(url) }
+        if panel.runModal() == .OK, let url = panel.url { Screencapture.setFolder(url, for: kind) }
     }
 
     @objc private func toggleOption(_ sender: NSMenuItem) {
@@ -269,12 +272,14 @@ extension AppDelegate: NSMenuDelegate {
         menu.addItem(.separator())
         menu.addItem(item("Painel de captura do macOS", #selector(openToolbar), symbol: "slider.horizontal.below.rectangle",
                           shortcut: "5", save))
-        menu.addItem(item("Abrir pasta das capturas", #selector(openFolder), symbol: "folder"))
         let options = NSMenuItem(title: "Opções", action: nil, keyEquivalent: "")
         options.image = NSImage(systemSymbolName: "gearshape", accessibilityDescription: nil)
         setHint(options, "no atalho: ⇧⌘5 → Opções")
         options.submenu = optionsMenu()
         menu.addItem(options)
+
+        menu.addItem(.separator())
+        folderItems().forEach(menu.addItem)
 
         menu.addItem(.separator())
         if let release = updater.available {
@@ -291,29 +296,27 @@ extension AppDelegate: NSMenuDelegate {
         menu.addItem(quit)
     }
 
+    /// Atalhos pras pastas onde os prints e as gravações caem; um só se forem a mesma.
+    private func folderItems() -> [NSMenuItem] {
+        let shots = Screencapture.folder.standardizedFileURL
+        let videos = Screencapture.recordingFolder.standardizedFileURL
+        let folders = shots == videos
+            ? [("Capturas", shots)]
+            : [("Prints", shots), ("Gravações", videos)]
+        return folders.map { title, url in
+            let entry = item(title, #selector(openFolder(_:)), symbol: "folder")
+            entry.representedObject = url
+            return entry
+        }
+    }
+
     /// Espelha as opções do ⇧⌘5: Salvar em, Timer e as opções de ponteiro, cliques e microfone.
     private func optionsMenu() -> NSMenu {
         let options = Options.shared
         let menu = NSMenu()
 
-        let saveTo = NSMenuItem(title: "Salvar em", action: nil, keyEquivalent: "")
-        let saveMenu = NSMenu()
-        let current = Screencapture.folder.standardizedFileURL
-        let home = FileManager.default.homeDirectoryForCurrentUser
-        var places = [("Mesa", home.appendingPathComponent("Desktop")), ("Documentos", home.appendingPathComponent("Documents"))]
-        if !places.contains(where: { $0.1.standardizedFileURL == current }) {
-            places.append((current.lastPathComponent, current))
-        }
-        for (title, url) in places {
-            let entry = item(title, #selector(chooseFolder(_:)))
-            entry.representedObject = url
-            entry.state = url.standardizedFileURL == current ? .on : .off
-            saveMenu.addItem(entry)
-        }
-        saveMenu.addItem(.separator())
-        saveMenu.addItem(item("Outro local…", #selector(chooseFolder(_:))))
-        saveTo.submenu = saveMenu
-        menu.addItem(saveTo)
+        menu.addItem(saveToItem("Salvar prints em", .prints))
+        menu.addItem(saveToItem("Salvar gravações em", .recordings))
 
         let timer = NSMenuItem(title: "Timer", action: nil, keyEquivalent: "")
         let timerMenu = NSMenu()
@@ -334,6 +337,30 @@ extension AppDelegate: NSMenuDelegate {
         menu.addItem(toggle("Abrir depois de capturar", "openAfter", options.openAfter,
                             hint: "como o Salvar em → Pré-Visualização"))
         return menu
+    }
+
+    private func saveToItem(_ title: String, _ kind: Screencapture.Kind) -> NSMenuItem {
+        let saveTo = NSMenuItem(title: title, action: nil, keyEquivalent: "")
+        let menu = NSMenu()
+        let current = Screencapture.folder(for: kind).standardizedFileURL
+        let home = FileManager.default.homeDirectoryForCurrentUser
+        var places = [("Mesa", home.appendingPathComponent("Desktop")), ("Documentos", home.appendingPathComponent("Documents"))]
+        if !places.contains(where: { $0.1.standardizedFileURL == current }) {
+            places.append((current.lastPathComponent, current))
+        }
+        for (title, url) in places {
+            let entry = item(title, #selector(chooseFolder(_:)))
+            entry.representedObject = url
+            entry.tag = kind == .prints ? 0 : 1
+            entry.state = url.standardizedFileURL == current ? .on : .off
+            menu.addItem(entry)
+        }
+        menu.addItem(.separator())
+        let other = item("Outro local…", #selector(chooseFolder(_:)))
+        other.tag = kind == .prints ? 0 : 1
+        menu.addItem(other)
+        saveTo.submenu = menu
+        return saveTo
     }
 
     private func helpItem() -> NSMenuItem {

@@ -41,7 +41,8 @@ enum Log {
         Capture \(Updater.currentVersion) · macOS \(ProcessInfo.processInfo.operatingSystemVersionString)
         Monitores: \(displays.joined(separator: "; "))
         Gravação de Tela: \(CGPreflightScreenCaptureAccess() ? "permitida" : "sem permissão")
-        Pasta: \(Screencapture.folder.path)
+        Pasta dos prints: \(Screencapture.folder.path)
+        Pasta das gravações: \(Screencapture.recordingFolder.path)
         Opções: \(Options.shared.summary)
         """
     }
