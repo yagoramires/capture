@@ -1,61 +1,43 @@
-<p align="center">
-  <img src="docs/icon.png" width="128" alt="Ícone do Capture">
-</p>
+# Capture
 
-<h1 align="center">Capture</h1>
+Print e gravação de tela do macOS direto da barra de menus, sem decorar atalho. Cada opção mostra o atalho nativo do lado, pra você ir aprendendo.
 
-<p align="center">
-  Print e gravação de tela do macOS direto da barra de menus, sem decorar atalho.<br>
-  Cada opção mostra o atalho nativo do lado, pra você ir aprendendo.
-</p>
+[Baixar a última versão](https://github.com/yagoramires/capture/releases/latest) · [Reportar problema](https://github.com/yagoramires/capture/issues/new)
 
-<p align="center">
-  <a href="https://github.com/yagoramires/capture/releases/latest"><b>Baixar a última versão</b></a>
-  ·
-  <a href="https://github.com/yagoramires/capture/issues/new">Reportar problema</a>
-</p>
+O macOS tem um bom sistema de captura de tela, mas ele fica escondido atrás de atalhos como `⇧⌘4`, `⌃⇧⌘4` e `⇧⌘4` + Espaço + `⌥`, que são fáceis de esquecer. O Capture coloca todas essas opções num menu. Não tem gravador próprio: tudo passa pelo `screencapture` do sistema, o mesmo que os atalhos usam, com o mesmo som, a mesma qualidade e a mesma pasta.
 
----
+## Instalar
 
-## Por que existe
+1. Baixe o `Capture-x.y.z.zip` na [página de releases](https://github.com/yagoramires/capture/releases/latest), descompacte e arraste o **Capture.app** pra pasta **Aplicativos**.
+2. Abra o Capture. Como ele não é assinado com um certificado pago da Apple, na primeira vez o macOS avisa que não conseguiu verificar o desenvolvedor. Clique com o botão direito no app → **Abrir**, ou vá em **Ajustes do Sistema → Privacidade e Segurança**, role até o fim e clique em **Abrir Mesmo Assim**. Pelo Terminal também resolve: `xattr -dr com.apple.quarantine /Applications/Capture.app`
+3. Na primeira captura, dê a permissão de Gravação de Tela (veja **Permissões**).
+4. Opcional: no menu, marque **Abrir ao iniciar sessão**.
 
-O macOS tem um bom sistema de captura de tela, mas ele fica escondido atrás de atalhos como `⇧⌘4`,
-`⌃⇧⌘4` e `⇧⌘4` + Espaço + `⌥`, que são fáceis de esquecer. O Capture coloca todas essas opções num menu.
-Não tem gravador próprio: tudo passa pelo `screencapture` do sistema, o mesmo que os atalhos usam,
-com o mesmo som, a mesma qualidade e a mesma pasta.
+Requer macOS 14 ou mais novo. Roda nativo em Apple Silicon e Intel. Também dá pra compilar do código (veja **Build local**).
 
-## O que ele faz
+Instalador `.dmg` e instalação pelo NeyHub chegam na próxima versão.
 
-Clique no ícone do Capture na barra de menus:
+### Desinstalar
 
-### Print: salva um arquivo
+1. No menu, desmarque **Abrir ao iniciar sessão** e clique em **Sair**.
+2. Apague o **Capture.app** de Aplicativos.
+3. Em **Ajustes do Sistema → Privacidade e Segurança → Gravação de Tela e Áudio do Sistema**, remova o Capture.
+4. Opcional, pra apagar as opções e os logs: `defaults delete local.capture; rm -rf ~/Library/Logs/Capture`
 
-| Item | Atalho nativo |
-| --- | --- |
-| Tela inteira (do monitor onde está o mouse) | `⇧⌘3` |
-| Parte selecionada | `⇧⌘4`. Enquanto arrasta: segure Espaço pra mover, `⇧` trava um lado, `⌥` cresce a partir do centro. Esc cancela. |
-| Janela | `⇧⌘4`, depois Espaço e clique na janela |
-| Janela sem sombra | `⇧⌘4`, depois Espaço, e clique na janela segurando `⌥` |
+## Permissões
 
-### Copiar: vai pra área de transferência
+- **Gravação de Tela** (Ajustes do Sistema → Privacidade e Segurança → Gravação de Tela e Áudio do Sistema → Capture): pedida na primeira captura.
+- **Microfone**: só se você ligar a opção de gravar o microfone ("Para gravar o som do microfone junto com a tela").
 
-| Item | Atalho nativo |
-| --- | --- |
-| Tela inteira | `⌃⇧⌘3` |
-| Parte selecionada | `⌃⇧⌘4` |
-| Janela | `⌃⇧⌘4`, depois Espaço e clique na janela |
+### Privacidade
 
-O `⌃` é a tecla **Control**, não a Option (`⌥`).
+O Capture não coleta nem envia nada. Prints e vídeos ficam só no seu Mac, na pasta que você escolheu.
+A única conexão de rede é a consulta à API pública do GitHub (`api.github.com`) pra saber se tem
+versão nova, e o download dela quando você aceita atualizar.
 
-### Gravar vídeo
+## Como usar
 
-| Item | Atalho nativo |
-| --- | --- |
-| Tela inteira | `⇧⌘5`, depois **Gravar a Tela Inteira** |
-| Parte selecionada | `⇧⌘5`, depois **Gravar a Parte Selecionada** |
-
-Enquanto grava, o ícone vira um botão vermelho com o tempo. Pra parar, clique nele ou aperte `⌃⌘Esc`,
-o atalho nativo. Quando termina, o vídeo aparece no Finder.
+Clique no ícone do Capture na barra de menus e escolha o tipo de captura: **Print** (salva um arquivo), **Copiar** (vai pra área de transferência) ou **Gravar vídeo** (tela inteira ou parte selecionada). Enquanto grava, o ícone vira um botão vermelho com o tempo; pra parar, clique nele ou aperte `⌃⌘Esc`, o atalho nativo. Quando termina, o vídeo aparece no Finder.
 
 ### Resto do menu
 
@@ -68,49 +50,62 @@ o atalho nativo. Quando termina, o vídeo aparece no Finder.
 | Abrir ao iniciar sessão | Liga o Capture junto com o Mac. |
 | Ajuda ▸ | Mostra a versão, busca atualizações, abre o log de depuração e reporta problemas. |
 
-## Instalação
-
-1. Baixe o `Capture-x.y.z.zip` na [página de releases](https://github.com/yagoramires/capture/releases/latest),
-   descompacte e arraste o **Capture.app** pra pasta **Aplicativos**.
-2. Abra o Capture. Como ele não é assinado com um certificado pago da Apple, na primeira vez o macOS
-   avisa que não conseguiu verificar o desenvolvedor. Vá em **Ajustes do Sistema → Privacidade e
-   Segurança**, role até o fim e clique em **Abrir Mesmo Assim**.
-   Pelo Terminal também resolve: `xattr -dr com.apple.quarantine /Applications/Capture.app`
-3. Na primeira captura, dê a permissão de **Gravação de Tela** (Ajustes do Sistema → Privacidade e
-   Segurança → Gravação de Tela e Áudio do Sistema → Capture). Se for gravar com microfone, ele também
-   pede o microfone.
-4. Opcional: no menu, marque **Abrir ao iniciar sessão**.
-
-Requer macOS 14 ou mais novo. Roda nativo em Apple Silicon e Intel.
-
-### Atualizações
-
-O Capture confere ao abrir (e uma vez por dia) se tem versão nova e oferece instalar: ele baixa,
-troca o app e reabre sozinho. A versão baixada só é instalada se tiver sido assinada pelo mesmo
-certificado do app em uso. Se você deixar pra depois, ele não insiste: o ícone ganha um sinal e o
-menu mostra **Atualizar para a versão X…**.
-
-### Desinstalar
-
-1. No menu, desmarque **Abrir ao iniciar sessão** e clique em **Sair**.
-2. Apague o **Capture.app** de Aplicativos.
-3. Em **Ajustes do Sistema → Privacidade e Segurança → Gravação de Tela e Áudio do Sistema**, remova o Capture.
-4. Opcional, pra apagar as opções e os logs: `defaults delete local.capture; rm -rf ~/Library/Logs/Capture`
-
-## Privacidade
-
-O Capture não coleta nem envia nada. Prints e vídeos ficam só no seu Mac, na pasta que você escolheu.
-A única conexão de rede é a consulta à API pública do GitHub (`api.github.com`) pra saber se tem
-versão nova, e o download dela quando você aceita atualizar.
-
-## Problemas
+### Problemas
 
 Em **Ajuda → Reportar problema…**, o Capture abre uma issue no GitHub já com a versão, o macOS e os
 monitores preenchidos, e mostra no Finder o log pra você anexar. O log fica em
 `~/Library/Logs/Capture/capture.log` e só registra o que o app fez (qual captura, com quais opções,
 o que o `screencapture` respondeu), nunca o conteúdo das capturas.
 
-## Desenvolvimento
+### Limitações
+
+- O Touch Bar (`⇧⌘6`) não está no menu.
+- Os prints e gravações do Capture não mostram a miniatura flutuante do canto da tela; use
+  **Abrir depois de capturar** se quiser editar logo em seguida.
+- Gravar só o áudio do sistema (sem microfone) não é possível pelo `screencapture`.
+
+## Atalhos
+
+O menu mostra, do lado de cada item, o atalho nativo do macOS que faz a mesma coisa. O `⌃` é a tecla **Control**, não a Option (`⌥`).
+
+#### Print: salva um arquivo
+
+| Item | Atalho nativo |
+| --- | --- |
+| Tela inteira (do monitor onde está o mouse) | `⇧⌘3` |
+| Parte selecionada | `⇧⌘4`. Enquanto arrasta: segure Espaço pra mover, `⇧` trava um lado, `⌥` cresce a partir do centro. Esc cancela. |
+| Janela | `⇧⌘4`, depois Espaço e clique na janela |
+| Janela sem sombra | `⇧⌘4`, depois Espaço, e clique na janela segurando `⌥` |
+
+#### Copiar: vai pra área de transferência
+
+| Item | Atalho nativo |
+| --- | --- |
+| Tela inteira | `⌃⇧⌘3` |
+| Parte selecionada | `⌃⇧⌘4` |
+| Janela | `⌃⇧⌘4`, depois Espaço e clique na janela |
+
+O `⌃` é a tecla **Control**, não a Option (`⌥`).
+
+#### Gravar vídeo
+
+| Item | Atalho nativo |
+| --- | --- |
+| Tela inteira | `⇧⌘5`, depois **Gravar a Tela Inteira** |
+| Parte selecionada | `⇧⌘5`, depois **Gravar a Parte Selecionada** |
+
+Enquanto grava, o ícone vira um botão vermelho com o tempo. Pra parar, clique nele ou aperte `⌃⌘Esc`,
+o atalho nativo. Quando termina, o vídeo aparece no Finder.
+
+## Modos de exibição
+
+O Capture não tem temas. O ícone da barra vira um botão vermelho com o tempo durante a gravação, e ganha um sinal quando há atualização pendente. As opções de captura (pastas, timer, ponteiro, cliques, microfone) ficam no submenu **Opções**.
+
+## Atualizações
+
+O Capture confere ao abrir (e uma vez por dia) se tem versão nova e oferece instalar: ele baixa, troca o app e reabre sozinho. A versão baixada só é instalada se tiver sido assinada pelo mesmo certificado do app em uso. Se você deixar pra depois, ele não insiste: o ícone ganha um sinal e o menu mostra **Atualizar para a versão X…**.
+
+## Build local
 
 ### Compilar
 
@@ -161,12 +156,9 @@ tail -f ~/Library/Logs/Capture/capture.log
 O release **precisa ser assinado com o mesmo certificado** das versões anteriores, senão os apps já
 instalados recusam a atualização automática.
 
-## Limitações
+## Patch notes
 
-- O Touch Bar (`⇧⌘6`) não está no menu.
-- Os prints e gravações do Capture não mostram a miniatura flutuante do canto da tela; use
-  **Abrir depois de capturar** se quiser editar logo em seguida.
-- Gravar só o áudio do sistema (sem microfone) não é possível pelo `screencapture`.
+Veja o [CHANGELOG](CHANGELOG.md).
 
 ## Licença
 
