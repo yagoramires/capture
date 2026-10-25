@@ -234,6 +234,8 @@ final class Recorder {
         let stdin = Pipe()
         let process = Self.launch(args, stdin) { [weak self] status, errors in
             guard let self else { return }
+            // Ctrl-C nosso antes do vídeo começar (contagem do timer, ou desinstalar): sair sem arquivo não é erro.
+            let cancelled = self.stopping && (self.process?.terminationReason == .uncaughtSignal || (self.started ?? .distantPast) > Date())
             self.process = nil
             self.stdin = nil
             self.started = nil
@@ -242,6 +244,8 @@ final class Recorder {
             if FileManager.default.fileExists(atPath: file.path) {
                 debugLog("gravação salva em \(file.path)")
                 if options.openAfter { NSWorkspace.shared.open(file) } else { NSWorkspace.shared.activateFileViewerSelecting([file]) }
+            } else if cancelled {
+                debugLog("gravação interrompida antes de começar")
             } else {
                 Screencapture.showError("Não deu pra gravar a tela", errors.isEmpty ? "O screencapture saiu com código \(status)." : errors)
             }

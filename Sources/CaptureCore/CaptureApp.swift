@@ -17,7 +17,7 @@ public final class CaptureApp: NSObject {
     private let popover = NSPopover()
     private var popoverHost: NSHostingController<PopoverView>?
     private var outsideClicks: Any?
-    private var settingsWindow: NSWindow?
+    private(set) var settingsWindow: NSWindow?
     /// Hospedado: o NeyHub liga à tela de Permissões dele (Gravação de Tela e Microfone são do NeyHub).
     public var onOpenPermissions: (() -> Void)?
     /// Avulso: o Updater já preparou uma versão, que entra quando o app fechar.
@@ -26,6 +26,10 @@ public final class CaptureApp: NSObject {
     public var onRelaunch: (() -> Void)?
     /// O pedido do sistema; o --selftest troca para conferir que o hospedado nunca chama.
     var requestScreenAccess: () -> Bool = CGRequestScreenCaptureAccess
+    /// Só leitura (nunca pede); o --selftest troca para não depender do estado real do Microfone.
+    var microphoneGranted: () -> Bool = { AVCaptureDevice.authorizationStatus(for: .audio) == .authorized }
+    /// Depois do stop() nada começa: ações já agendadas e a seleção de área em andamento são descartadas.
+    private(set) var stopped = false
 
     public init(defaults: UserDefaults, hosted: Bool, version: String) {
         self.defaults = defaults
@@ -38,12 +42,15 @@ public final class CaptureApp: NSObject {
     }
 
     public func start() {
+        stopped = false
         if !hosted { setupDebugBridge() }
         debugLog("iniciou\n\(Log.environment)")
     }
 
     /// Desinstalar no NeyHub: uma gravação em andamento é encerrada como no ⌃⌘Esc (o vídeo fica salvo) e o ícone sai.
     public func stop() {
+        stopped = true
+        picker.cancel()
         recorder.stopAndWait()
         if let debugObserver { DistributedNotificationCenter.default().removeObserver(debugObserver) }
         debugObserver = nil
@@ -70,7 +77,7 @@ public final class CaptureApp: NSObject {
 
     public func makeSettings() -> NSViewController {
         NSHostingController(rootView: SettingsView(
-            version: Log.version, hosted: hosted,
+            version: Log.version, hosted: hosted, wantsMicrophone: { Options.shared.recordMicrophone },
             menuBar: hosted ? nil : Presence.load(defaults, hasScreen: false).menuBar,
             onMenuBar: { [weak self] visible in self?.saveMenuBar(visible) },
             act: { [weak self] in self?.perform($0) }))
@@ -86,7 +93,7 @@ public final class CaptureApp: NSObject {
             settingsWindow = window
         }
         settingsWindow?.center()
-        NSApp.activate(ignoringOtherApps: true)
+        Front.activate()
         settingsWindow?.makeKeyAndOrderFront(nil)
     }
 
@@ -142,7 +149,10 @@ public final class CaptureApp: NSObject {
 
     /// Espera o popover sumir da tela pra ele não sair no print.
     private func afterMenuCloses(_ action: @escaping () -> Void) {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25, execute: action)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { [weak self] in
+            guard let self, !self.stopped else { return }
+            action()
+        }
     }
 
     private func recordScreen() {
@@ -151,8 +161,8 @@ public final class CaptureApp: NSObject {
 
     private func recordSelection() {
         afterMenuCloses { [picker, recorder] in
-            picker.pick { area in
-                guard let area else { return debugLog("seleção da gravação cancelada") }
+            picker.pick { [weak self] area in
+                guard let area, self?.stopped == false else { return debugLog("seleção da gravação cancelada") }
                 recorder.start(area: area)
             }
         }
@@ -314,7 +324,7 @@ extension CaptureApp: NSPopoverDelegate {
         return PopoverState(
             version: Log.version, hosted: hosted, needsPermission: !CGPreflightScreenCaptureAccess(),
             // Avulso o próprio screencapture faz o pedido do microfone, como sempre.
-            needsMicrophone: hosted && options.recordMicrophone && AVCaptureDevice.authorizationStatus(for: .audio) != .authorized,
+            needsMicrophone: hosted && options.recordMicrophone && !microphoneGranted(),
             elapsed: recorder.started.map { Date().timeIntervalSince($0) }, partial: recorder.partial,
             delay: options.delay, showCursor: options.showCursor, showClicks: options.showClicks,
             recordMicrophone: options.recordMicrophone, openAfter: options.openAfter,

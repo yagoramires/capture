@@ -1,5 +1,4 @@
 import AppKit
-import AVFoundation
 
 /// `Capture --selftest`. Sem XCTest (só CommandLineTools). Nunca grava no `.standard`: é o domínio do Capture em uso.
 /// Nunca tira print nem grava: o screencapture é trocado por um processo falso.
@@ -8,7 +7,9 @@ extension CaptureApp {
         Log.enabled = false
         defaultsInjected()
         popover()
+        hostedGuard()
         stopEndsRecording()
+        nothingStartsAfterStop()
         permissions()
     }
 
@@ -38,10 +39,11 @@ extension CaptureApp {
     /// Hospedado: sem "Abrir ao iniciar sessão" (é o login do NeyHub), sem "Sair" (fecharia o NeyHub) e sem
     /// a linha de atualização (quem atualiza é o NeyHub).
     static func popover() {
-        func state(hosted: Bool, microphone: Bool = false) -> PopoverState {
+        func state(hosted: Bool, microphone: Bool = false, granted: Bool = false) -> PopoverState {
             let (d, name) = tempDefaults()
             defer { d.removePersistentDomain(forName: name) }
             let app = CaptureApp(defaults: d, hosted: hosted, version: "9.8.7")
+            app.microphoneGranted = { granted }
             app.updateReady = true
             if microphone { app.perform(.toggle("recordMicrophone")) }
             return app.popoverState()
@@ -53,9 +55,9 @@ extension CaptureApp {
         precondition(alone.elapsed == nil && !alone.partial)
 
         // Microfone: só conta hospedado e com "Gravar o microfone" ligado; avulso o screencapture pede sozinho.
-        let missing = AVCaptureDevice.authorizationStatus(for: .audio) != .authorized
         precondition(!hosted.needsMicrophone && !alone.needsMicrophone)
-        precondition(state(hosted: true, microphone: true).needsMicrophone == missing)
+        precondition(state(hosted: true, microphone: true).needsMicrophone)
+        precondition(!state(hosted: true, microphone: true, granted: true).needsMicrophone)
         precondition(!state(hosted: false, microphone: true).needsMicrophone)
 
         // "Reiniciar agora" fica na linha de atualização (só avulso); hospedado a ação não chega à casca.
@@ -69,6 +71,34 @@ extension CaptureApp {
             precondition(relaunched == (hosted ? 0 : 1), "Reiniciar agora hospedado=\(hosted): \(relaunched)")
         }
         precondition(clockText(84) == "1:24" && clockText(-4.2) == "em 5s")
+    }
+
+    /// Hospedado, Sair, login, Configurações e Reiniciar agora não fazem nada (fechariam ou mexeriam no NeyHub).
+    /// Se a guarda falhar, o .quit encerra o selftest antes do "selftest ok".
+    static func hostedGuard() {
+        let (d, name) = tempDefaults()
+        defer { d.removePersistentDomain(forName: name) }
+        let app = CaptureApp(defaults: d, hosted: true, version: "9.8.7")
+        var relaunched = 0
+        app.onRelaunch = { relaunched += 1 }
+        for action in [PopoverAction.quit, .loginItem, .settings, .relaunch] { app.perform(action) }
+        precondition(relaunched == 0 && app.settingsWindow == nil, "ação do avulso passou pela guarda do hospedado")
+    }
+
+    /// Depois do stop() (desinstalar), uma gravação já pedida no popover não começa.
+    static func nothingStartsAfterStop() {
+        let (d, name) = tempDefaults()
+        defer { d.removePersistentDomain(forName: name) }
+        let launch = Recorder.launch
+        defer { Recorder.launch = launch }
+        var launches = 0
+        Recorder.launch = { _, _, _ in launches += 1; return nil }
+        let app = CaptureApp(defaults: d, hosted: true, version: "9.8.7")
+        // Só a tela inteira: a parte selecionada abriria o AreaPicker de verdade se a guarda falhasse.
+        app.perform(.record(partial: false))
+        app.stop()
+        RunLoop.main.run(until: Date().addingTimeInterval(0.5))
+        precondition(launches == 0 && !app.recorder.isRecording, "gravou depois do stop()")
     }
 
     /// Desinstalar no meio da gravação: o stop() manda o Ctrl-C do ⌃⌘Esc e espera o screencapture sair (Review Focus 2).

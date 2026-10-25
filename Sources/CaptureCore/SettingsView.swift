@@ -7,6 +7,8 @@ import SwiftUI
 struct SettingsView: View {
     let version: String
     let hosted: Bool
+    /// "Gravar o microfone" ligado: só aí o Microfone importa.
+    let wantsMicrophone: () -> Bool
     /// nil hospedado: o ícone é do NeyHub.
     let menuBar: Bool?
     let onMenuBar: (Bool) -> Void
@@ -16,15 +18,19 @@ struct SettingsView: View {
     @ViewState private var shown: Bool
     @ViewState private var screen: Bool
     @ViewState private var microphone: Bool
+    @ViewState private var usesMicrophone: Bool
 
-    init(version: String, hosted: Bool, menuBar: Bool?, onMenuBar: @escaping (Bool) -> Void, act: @escaping (PopoverAction) -> Void,
+    init(version: String, hosted: Bool, wantsMicrophone: @escaping () -> Bool, menuBar: Bool?, onMenuBar: @escaping (Bool) -> Void,
+         act: @escaping (PopoverAction) -> Void,
          granted: @escaping () -> (screen: Bool, microphone: Bool) = SettingsView.systemPermissions) {
-        self.version = version; self.hosted = hosted; self.menuBar = menuBar; self.onMenuBar = onMenuBar; self.act = act
+        self.version = version; self.hosted = hosted; self.wantsMicrophone = wantsMicrophone
+        self.menuBar = menuBar; self.onMenuBar = onMenuBar; self.act = act
         self.granted = granted
         let now = granted()
         _shown = ViewState(wrappedValue: menuBar ?? true)
         _screen = ViewState(wrappedValue: now.screen)
         _microphone = ViewState(wrappedValue: now.microphone)
+        _usesMicrophone = ViewState(wrappedValue: wantsMicrophone())
     }
 
     static func systemPermissions() -> (screen: Bool, microphone: Bool) {
@@ -57,7 +63,7 @@ struct SettingsView: View {
                 VStack(alignment: .leading, spacing: 8) {
                     permission("Gravação de Tela", screen)
                     // Avulso o próprio screencapture pede o microfone na primeira gravação com ele.
-                    if hosted { permission("Microfone", microphone, note: "só se “Gravar o microfone” estiver ligado") }
+                    if hosted && usesMicrophone { permission("Microfone", microphone, note: "“Gravar o microfone” está ligado") }
                 }
             }
             GCard {
@@ -87,6 +93,7 @@ struct SettingsView: View {
             let now = granted()
             screen = now.screen
             microphone = now.microphone
+            usesMicrophone = wantsMicrophone()
         }
     }
 

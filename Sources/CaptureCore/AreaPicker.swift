@@ -31,6 +31,12 @@ final class AreaPicker {
         current?.makeKey()
     }
 
+    /// Desinstalar no meio da seleção: fecha as janelas como o Esc.
+    func cancel() {
+        guard completion != nil else { return }
+        finish(nil)
+    }
+
     private func finish(_ rect: NSRect?) {
         windows.forEach { $0.orderOut(nil) }
         windows = []

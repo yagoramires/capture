@@ -25,10 +25,10 @@ public enum Snapshots {
         hosted.recordMicrophone = true
         hosted.needsMicrophone = true
         save(PopoverView(state: hosted, help: true) { _ in }, as: "capture-popover-neyhub.png", in: folder)
-        save(SettingsView(version: "0.3.0", hosted: false, menuBar: true, onMenuBar: { _ in }, act: { _ in },
+        save(SettingsView(version: "0.3.0", hosted: false, wantsMicrophone: { false }, menuBar: true, onMenuBar: { _ in }, act: { _ in },
                           granted: { (true, true) }).frame(width: 520),
              as: "capture-settings.png", in: folder)
-        save(SettingsView(version: "0.3.0", hosted: true, menuBar: nil, onMenuBar: { _ in }, act: { _ in },
+        save(SettingsView(version: "0.3.0", hosted: true, wantsMicrophone: { true }, menuBar: nil, onMenuBar: { _ in }, act: { _ in },
                           granted: { (false, false) }).frame(width: 520),
              as: "capture-settings-neyhub.png", in: folder)
         print("ok \(folder.path)")
