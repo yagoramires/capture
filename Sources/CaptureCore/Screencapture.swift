@@ -180,18 +180,33 @@ enum Screencapture {
 
 /// Traz o app pra frente (ele não tem janela) e mostra um aviso simples.
 func showAlert(_ title: String, _ details: String) {
-    NSApp.activate(ignoringOtherApps: true)
+    Front.activate()
     let alert = NSAlert()
     alert.messageText = title
     alert.informativeText = details
     alert.runModal()
 }
 
+/// Hospedado o NeyHub não pode ser puxado à força (`ignoringOtherApps`); o avulso vem pra frente como sempre.
+enum Front {
+    static var hosted = false
+
+    static func activate() {
+        if hosted { NSApp.activate() } else { NSApp.activate(ignoringOtherApps: true) }
+    }
+}
+
 /// Grava a tela até alguém mandar parar. O screencapture fecha o arquivo com Ctrl-C (o ícone)
 /// e também sozinho com o ⌃⌘Esc nativo; os dois juntos fazem ele descartar o vídeo.
 final class Recorder {
+    /// Abre o screencapture; o --selftest troca por um processo falso.
+    static var launch: (_ args: [String], _ stdin: Pipe, _ done: @escaping (Int32, String) -> Void) -> Process? = {
+        Screencapture.run($0, stdin: $1, done: $2)
+    }
     var onChange: (() -> Void)?
     private(set) var started: Date?
+    /// Gravando só uma parte da tela (o popover diz qual).
+    private(set) var partial = false
     private var process: Process?
     private var stdin: Pipe?
     /// Um segundo Ctrl-C enquanto o screencapture fecha o arquivo pode fazer ele descartar o vídeo.
@@ -217,7 +232,7 @@ final class Recorder {
 
         // Sem um stdin aberto o screencapture lê fim de arquivo e encerra a gravação na hora.
         let stdin = Pipe()
-        let process = Screencapture.run(args, stdin: stdin) { [weak self] status, errors in
+        let process = Self.launch(args, stdin) { [weak self] status, errors in
             guard let self else { return }
             self.process = nil
             self.stdin = nil
@@ -234,6 +249,7 @@ final class Recorder {
         guard let process else { return }
         self.process = process
         self.stdin = stdin
+        partial = area != nil
         // Com timer, o vídeo só começa depois da contagem; o relógio do ícone acompanha.
         started = Date().addingTimeInterval(TimeInterval(options.delay))
         onChange?()
@@ -245,12 +261,25 @@ final class Recorder {
         debugLog("parando gravação")
         process.interrupt()
     }
+
+    /// Desinstalar ou fechar no meio da gravação: o mesmo Ctrl-C do ícone, e espera o screencapture
+    /// fechar o arquivo (até `timeout`), senão o vídeo se perde junto com o processo.
+    func stopAndWait(timeout: TimeInterval = 5) {
+        guard let process else { return }
+        stop()
+        let deadline = Date().addingTimeInterval(timeout)
+        while process.isRunning, Date() < deadline { usleep(20_000) }
+        debugLog(process.isRunning ? "screencapture não saiu em \(Int(timeout)) s" : "gravação encerrada no stop")
+    }
 }
 
 /// Preferências do menu Opções, guardadas em UserDefaults. Espelham as opções do ⇧⌘5.
 final class Options {
-    static let shared = Options()
-    private let defaults = UserDefaults.standard
+    /// O `CaptureApp.init` troca pelo `defaults` injetado (no NeyHub, o domínio local.capture).
+    static var shared = Options(defaults: .standard)
+    let defaults: UserDefaults
+
+    init(defaults: UserDefaults) { self.defaults = defaults }
 
     /// Os mesmos tempos do Timer do ⇧⌘5.
     static let delays = [0, 5, 10]

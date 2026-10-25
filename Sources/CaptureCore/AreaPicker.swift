@@ -25,7 +25,7 @@ final class AreaPicker {
             window.contentView = view
             return window
         }
-        NSApp.activate(ignoringOtherApps: true)
+        Front.activate()
         windows.forEach { $0.orderFrontRegardless() }
         let current = windows.first { NSMouseInRect(NSEvent.mouseLocation, $0.frame, false) } ?? windows.first
         current?.makeKey()

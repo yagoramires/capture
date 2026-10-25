@@ -11,6 +11,10 @@ enum Log {
     private static var handle: FileHandle?
     /// O screencapture avisa que saiu numa thread de fundo: tudo que mexe no arquivo passa por aqui.
     private static let queue = DispatchQueue(label: "local.capture.log")
+    /// Vem do `CaptureApp.init`: no NeyHub o `Bundle.main` é o do NeyHub.
+    static var version = "?"
+    /// Desligado no --selftest e no --snapshots: não sujam o log de quem usa o Capture.
+    static var enabled = true
     private static let clock: ISO8601DateFormatter = {
         let formatter = ISO8601DateFormatter()
         formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
@@ -18,6 +22,7 @@ enum Log {
     }()
 
     static func write(_ message: String) {
+        guard enabled else { return }
         let line = Data("\(clock.string(from: Date())) \(message)\n".utf8)
         queue.sync {
             if handle == nil { open() }
@@ -38,7 +43,7 @@ enum Log {
     static var environment: String {
         let displays = NSScreen.screens.map { "\(Int($0.frame.width))×\(Int($0.frame.height)) em (\(Int($0.frame.minX)), \(Int($0.frame.minY)))" }
         return """
-        Capture \(Updater.currentVersion) · macOS \(ProcessInfo.processInfo.operatingSystemVersionString)
+        Capture \(version) · macOS \(ProcessInfo.processInfo.operatingSystemVersionString)
         Monitores: \(displays.joined(separator: "; "))
         Gravação de Tela: \(CGPreflightScreenCaptureAccess() ? "permitida" : "sem permissão")
         Pasta dos prints: \(Screencapture.folder.path)
