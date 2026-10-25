@@ -5,7 +5,7 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 ## [0.3.0] - 2026-10-25
 
 ### Adicionado
-- Instalação pelo NeyHub: o Capture também vem como plugin (`Capture-0.3.0.neyplugin`) e roda dentro do NeyHub, que dá a permissão de Gravação de Tela pela tela de Permissões dele; o Microfone é opcional e o painel avisa quando falta. Desinstalar pelo NeyHub no meio de uma gravação encerra como o `⌃⌘Esc`: o vídeo fica salvo.
+- Instalação pelo NeyHub: o Capture também vem como plugin (`Capture-0.3.0.neyplugin`) e roda dentro do NeyHub, que dá as permissões de Gravação de Tela e Microfone (opcional) pela tela de Permissões dele. Desinstalar pelo NeyHub no meio de uma gravação encerra como o `⌃⌘Esc`: o vídeo fica salvo.
 - Instalador `.dmg`, além do `.zip`.
 - Configurações em **Ajuda ▾ → Configurações…** (ou, com o ícone da barra escondido, abrindo o Capture de novo pelo Finder): janela com o interruptor **Mostrar na barra de menus**, o estado da Gravação de Tela, os atalhos nativos e os botões de log e de reportar problema. No NeyHub, ficam no card do Capture.
 - Fechar o Capture no meio de uma gravação também encerra como o `⌃⌘Esc`, sem perder o vídeo.

@@ -2,6 +2,6 @@
   "id": "local.capture",
   "name": "Capture",
   "hasScreen": false,
-  "permissions": ["screenRecording"],
+  "permissions": ["screenRecording", "microphone"],
   "binary": "libCapturePlugin.dylib"
 }
