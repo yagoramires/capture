@@ -1,0 +1,15 @@
+{
+  "originHash" : "ff43a30d2c00ab3711b0ed61d632e4d9e33204ea11a0a295ffe1dcbe03c982b8",
+  "pins" : [
+    {
+      "identity" : "neyhub",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/yagoramires/neyhub.git",
+      "state" : {
+        "revision" : "f839740a7d688009c0b8ecb19aea4250dc4feb2a",
+        "version" : "0.1.0"
+      }
+    }
+  ],
+  "version" : 3
+}
